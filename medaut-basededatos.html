@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medaut — Base de Datos de Pacientes</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: #f0f4ff; color: #1a1f5e; min-height: 100vh; }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: #1a1f5e; padding: 24px 14px; display: flex; flex-direction: column; flex-shrink: 0; }
+.logo-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; padding: 0 6px; }
+.logo-mark { width: 36px; height: 36px; background: linear-gradient(135deg,#4f6ef7,#818cf8); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.logo-mark svg { width: 20px; height: 20px; }
+.logo-name { color: white; font-weight: 700; font-size: 17px; }
+.logo-tag { color: rgba(255,255,255,0.3); font-size: 10px; display: block; }
+.nav-group { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.2); letter-spacing: 0.12em; text-transform: uppercase; padding: 0 8px; margin: 14px 0 5px; }
+.nb { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; border: none; cursor: pointer; width: 100%; background: transparent; color: rgba(255,255,255,0.4); font-size: 12px; font-weight: 500; text-align: left; font-family: inherit; margin-bottom: 2px; border-left: 2px solid transparent; }
+.nb svg { width: 15px; height: 15px; }
+.nb.active { background: rgba(79,110,247,0.2); color: white; border-left-color: #4f6ef7; }
+.nb:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.7); }
+.sidebar-foot { margin-top: auto; }
+.doc-chip { display: flex; align-items: center; gap: 8px; padding: 10px 8px; background: rgba(255,255,255,0.05); border-radius: 9px; }
+.doc-av { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#4f6ef7,#818cf8); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 11px; }
+.doc-name { color: white; font-weight: 600; font-size: 12px; }
+.doc-role { color: rgba(255,255,255,0.3); font-size: 10px; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { background: white; border-bottom: 1px solid #e8edf8; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; }
+.topbar-title { font-size: 16px; font-weight: 700; color: #1a1f5e; }
+.topbar-right { display: flex; gap: 8px; }
+.btn-outline { padding: 7px 14px; border: 1.5px solid #e0e7ff; background: white; color: #4f6ef7; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px; font-family: inherit; }
+.btn-primary { padding: 7px 16px; border: none; background: linear-gradient(135deg,#4f6ef7,#818cf8); color: white; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px; font-family: inherit; display: flex; align-items: center; gap: 6px; }
+.btn-primary svg { width: 14px; height: 14px; }
+.content { flex: 1; display: flex; overflow: hidden; }
+.filters { width: 220px; background: white; border-right: 1px solid #e8edf8; padding: 20px 16px; overflow-y: auto; flex-shrink: 0; }
+.filter-title { font-size: 11px; font-weight: 700; color: #1a1f5e; margin-bottom: 12px; }
+.filter-group { margin-bottom: 20px; }
+.filter-group-title { font-size: 10px; font-weight: 700; color: #94a3b8; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+.filter-option { display: flex; align-items: center; gap: 8px; padding: 6px 0; cursor: pointer; }
+.filter-option input[type="checkbox"] { accent-color: #4f6ef7; width: 14px; height: 14px; }
+.filter-option label { font-size: 12px; color: #475569; cursor: pointer; flex: 1; }
+.filter-option .filter-count { font-size: 10px; font-weight: 600; color: #94a3b8; background: #f1f5f9; padding: 1px 6px; border-radius: 10px; }
+.table-section { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.table-toolbar { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; background: white; }
+.search-wrap { display: flex; align-items: center; gap: 8px; flex: 1; background: #f8faff; border: 1.5px solid #e0e7ff; border-radius: 8px; padding: 7px 12px; }
+.search-wrap svg { width: 14px; height: 14px; color: #94a3b8; flex-shrink: 0; }
+.search-wrap input { flex: 1; border: none; background: transparent; font-size: 13px; color: #1e293b; font-family: inherit; }
+.search-wrap input:focus { outline: none; }
+.search-wrap input::placeholder { color: #94a3b8; }
+.sort-btn { padding: 7px 12px; border: 1.5px solid #e0e7ff; background: white; color: #475569; font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 8px; font-family: inherit; display: flex; align-items: center; gap: 5px; }
+.records-count { font-size: 11px; color: #94a3b8; }
+.table-wrap { flex: 1; overflow-y: auto; }
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl thead th { font-size: 10px; font-weight: 700; color: #94a3b8; letter-spacing: 0.06em; text-transform: uppercase; padding: 11px 16px; text-align: left; background: #f8faff; border-bottom: 1px solid #f1f5f9; white-space: nowrap; position: sticky; top: 0; }
+.tbl tbody td { font-size: 12px; color: #475569; padding: 13px 16px; border-bottom: 1px solid #f8faff; vertical-align: middle; }
+.tbl tbody tr:hover td { background: #f8faff; cursor: pointer; }
+.pt-cell { display: flex; align-items: center; gap: 10px; }
+.pt-av { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 11px; flex-shrink: 0; }
+.pt-name { font-weight: 600; color: #1e293b; font-size: 13px; }
+.pt-id { font-size: 10px; color: #94a3b8; }
+.badge { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+.b-ok { background: #d1fae5; color: #065f46; }
+.b-wa { background: #fef3c7; color: #d97706; }
+.b-al { background: #fee2e2; color: #991b1b; }
+.action-btn { padding: 5px 10px; border: 1px solid #e0e7ff; background: white; color: #4f6ef7; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; font-family: inherit; }
+.detail-panel { width: 300px; background: white; border-left: 1px solid #e8edf8; padding: 20px; overflow-y: auto; flex-shrink: 0; }
+.dp-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; }
+.dp-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+.dp-name { font-size: 15px; font-weight: 700; color: #1e293b; }
+.dp-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.dp-section { margin-bottom: 16px; }
+.dp-section-title { font-size: 10px; font-weight: 700; color: #94a3b8; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+.dp-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f8faff; }
+.dp-row:last-child { border-bottom: none; }
+.dp-label { font-size: 11px; color: #94a3b8; }
+.dp-value { font-size: 12px; font-weight: 500; color: #1e293b; }
+.alert-chip { background: #fee2e2; color: #991b1b; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.alert-chip svg { width: 14px; height: 14px; flex-shrink: 0; }
+.hist-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f8faff; }
+.hist-item:last-child { border-bottom: none; }
+.hist-dot { width: 8px; height: 8px; border-radius: 50%; background: #4f6ef7; margin-top: 4px; flex-shrink: 0; }
+.hist-date { font-size: 10px; color: #94a3b8; }
+.hist-text { font-size: 12px; color: #475569; }
+.dp-btn { width: 100%; padding: 9px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; margin-bottom: 6px; }
+.dp-btn-primary { border: none; background: linear-gradient(135deg,#4f6ef7,#818cf8); color: white; }
+.dp-btn-outline { border: 1.5px solid #e0e7ff; background: white; color: #4f6ef7; }
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+    <div><div class="logo-name">Medaut</div><span class="logo-tag">Cirugía Digital</span></div>
+  </div>
+  <div class="nav-group">Principal</div>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Panel de control</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Métricas</button>
+  <div class="nav-group">Gestión</div>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendario</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Consultas virtuales</button>
+  <button class="nb active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Base de datos</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Mensajes</button>
+  <div class="nav-group">Admin</div>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Permisos</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Configuración</button>
+  <div class="sidebar-foot">
+    <div class="doc-chip">
+      <div class="doc-av">DR</div>
+      <div><div class="doc-name">Dr. Ramírez</div><div class="doc-role">Cirujano General</div></div>
+    </div>
+  </div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Base de datos de pacientes</div>
+    <div class="topbar-right">
+      <button class="btn-outline">Importar CSV</button>
+      <button class="btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nuevo paciente</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="filters">
+      <div class="filter-title">Filtros</div>
+      <div class="filter-group">
+        <div class="filter-group-title">Estado</div>
+        <div class="filter-option"><input type="checkbox" id="f1" checked><label for="f1">Al día</label><span class="filter-count">89</span></div>
+        <div class="filter-option"><input type="checkbox" id="f2" checked><label for="f2">Seguimiento</label><span class="filter-count">24</span></div>
+        <div class="filter-option"><input type="checkbox" id="f3" checked><label for="f3">Contactar</label><span class="filter-count">14</span></div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-group-title">Procedimiento</div>
+        <div class="filter-option"><input type="checkbox" id="f4" checked><label for="f4">Cirugía mayor</label><span class="filter-count">45</span></div>
+        <div class="filter-option"><input type="checkbox" id="f5" checked><label for="f5">Cirugía menor</label><span class="filter-count">38</span></div>
+        <div class="filter-option"><input type="checkbox" id="f6" checked><label for="f6">Pre-operatorio</label><span class="filter-count">21</span></div>
+        <div class="filter-option"><input type="checkbox" id="f7" checked><label for="f7">Post-operatorio</label><span class="filter-count">23</span></div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-group-title">Obra social</div>
+        <div class="filter-option"><input type="checkbox" id="f8" checked><label for="f8">OSDE</label><span class="filter-count">32</span></div>
+        <div class="filter-option"><input type="checkbox" id="f9" checked><label for="f9">Swiss Medical</label><span class="filter-count">28</span></div>
+        <div class="filter-option"><input type="checkbox" id="f10" checked><label for="f10">Galeno</label><span class="filter-count">19</span></div>
+        <div class="filter-option"><input type="checkbox" id="f11" checked><label for="f11">Particular</label><span class="filter-count">48</span></div>
+      </div>
+    </div>
+    <div class="table-section">
+      <div class="table-toolbar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input placeholder="Buscar por nombre, DNI, obra social o procedimiento...">
+        </div>
+        <button class="sort-btn">Ordenar</button>
+        <span class="records-count">127 pacientes</span>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr><th>Paciente</th><th>Edad</th><th>Obra social</th><th>Procedimiento</th><th>Última visita</th><th>Próxima cita</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            <tr onclick="showDetail()">
+              <td><div class="pt-cell"><div class="pt-av" style="background:linear-gradient(135deg,#4f6ef7,#818cf8)">MR</div><div><div class="pt-name">María Rodríguez</div><div class="pt-id">ID: 0042 · Dr. Ramírez</div></div></div></td>
+              <td>42</td><td>OSDE</td><td>Apendicectomía</td><td>Hace 2 sem.</td><td>10 ago</td>
+              <td><span class="badge b-ok">Al día</span></td><td><button class="action-btn">Ver</button></td>
+            </tr>
+            <tr>
+              <td><div class="pt-cell"><div class="pt-av" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">CG</div><div><div class="pt-name">Carlos González</div><div class="pt-id">ID: 0038 · Dr. Ramírez</div></div></div></td>
+              <td>58</td><td>Swiss Medical</td><td>Colecistectomía</td><td>Hace 3 mes.</td><td>15 ago</td>
+              <td><span class="badge b-wa">Seguimiento</span></td><td><button class="action-btn">Ver</button></td>
+            </tr>
+            <tr>
+              <td><div class="pt-cell"><div class="pt-av" style="background:linear-gradient(135deg,#10b981,#059669)">AL</div><div><div class="pt-name">Ana López</div><div class="pt-id">ID: 0031 · Dra. García</div></div></div></td>
+              <td>35</td><td>Particular</td><td>Hernioplastía</td><td>Hace 8 mes.</td><td>Sin turno</td>
+              <td><span class="badge b-al">Contactar</span></td><td><button class="action-btn">Ver</button></td>
+            </tr>
+            <tr>
+              <td><div class="pt-cell"><div class="pt-av" style="background:linear-gradient(135deg,#f59e0b,#d97706)">JP</div><div><div class="pt-name">Juan Pérez</div><div class="pt-id">ID: 0029 · Dr. Ramírez</div></div></div></td>
+              <td>67</td><td>Galeno</td><td>Post-operatorio</td><td>Hace 1 sem.</td><td>5 ago</td>
+              <td><span class="badge b-ok">Al día</span></td><td><button class="action-btn">Ver</button></td>
+            </tr>
+            <tr>
+              <td><div class="pt-cell"><div class="pt-av" style="background:linear-gradient(135deg,#ec4899,#be185d)">SM</div><div><div class="pt-name">Sofía Martínez</div><div class="pt-id">ID: 0027 · Dra. García</div></div></div></td>
+              <td>29</td><td>IOMA</td><td>Pre-operatorio</td><td>Hace 6 mes.</td><td>Sin turno</td>
+              <td><span class="badge b-al">Contactar</span></td><td><button class="action-btn">Ver</button></td>
+            </tr>
+            <tr>
+              <td><div class="pt-cell"><div class="pt-av" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8)">RS</div><div><div class="pt-name">Roberto Silva</div><div class="pt-id">ID: 0024 · Dr. Ramírez</div></div></div></td>
+              <td>51</td><td>OSDE</td><td>Cirugía laparoscópica</td><td>Hace 4 mes.</td><td>Sin turno</td>
+              <td><span class="badge b-wa">Seguimiento</span></td><td><button class="action-btn">Ver</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="detail-panel" id="detailPanel" style="display:none;">
+      <div class="dp-header">
+        <div class="dp-avatar" style="background:linear-gradient(135deg,#4f6ef7,#818cf8)">MR</div>
+        <div><div class="dp-name">María Rodríguez</div><div class="dp-sub">ID: 0042 · 42 años</div></div>
+      </div>
+      <div class="alert-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Alérgica a la penicilina</div>
+      <div class="dp-section">
+        <div class="dp-section-title">Información general</div>
+        <div class="dp-row"><span class="dp-label">Obra social</span><span class="dp-value">OSDE 210</span></div>
+        <div class="dp-row"><span class="dp-label">Teléfono</span><span class="dp-value">+54 11 1234-5678</span></div>
+        <div class="dp-row"><span class="dp-label">Email</span><span class="dp-value">maria@email.com</span></div>
+        <div class="dp-row"><span class="dp-label">Cirujano</span><span class="dp-value">Dr. Ramírez</span></div>
+      </div>
+      <div class="dp-section">
+        <div class="dp-section-title">Último procedimiento</div>
+        <div class="dp-row"><span class="dp-label">Tipo</span><span class="dp-value">Apendicectomía</span></div>
+        <div class="dp-row"><span class="dp-label">Fecha</span><span class="dp-value">12 jul 2026</span></div>
+        <div class="dp-row"><span class="dp-label">Evolución</span><span class="dp-value" style="color:#10b981;">Favorable</span></div>
+      </div>
+      <div class="dp-section">
+        <div class="dp-section-title">Historial reciente</div>
+        <div class="hist-item"><div class="hist-dot"></div><div><div class="hist-date">12 jul 2026</div><div class="hist-text">Apendicectomía laparoscópica exitosa</div></div></div>
+        <div class="hist-item"><div class="hist-dot" style="background:#10b981"></div><div><div class="hist-date">5 jul 2026</div><div class="hist-text">Consulta pre-operatoria. Análisis OK.</div></div></div>
+        <div class="hist-item"><div class="hist-dot" style="background:#f59e0b"></div><div><div class="hist-date">28 jun 2026</div><div class="hist-text">Primera consulta. Diagnóstico confirmado.</div></div></div>
+      </div>
+      <button class="dp-btn dp-btn-primary">Agendar turno</button>
+      <button class="dp-btn dp-btn-outline">Enviar WhatsApp</button>
+      <button class="dp-btn dp-btn-outline" style="color:#ef4444;border-color:#fee2e2;" onclick="document.getElementById('detailPanel').style.display='none'">Cerrar ficha</button>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+function showDetail() {
+  document.getElementById('detailPanel').style.display = 'block';
+}
+</script>
+</body>
+</html>
