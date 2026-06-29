@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medaut — Métricas del Consultorio</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: #f0f4ff; color: #1a1f5e; min-height: 100vh; }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: #1a1f5e; padding: 24px 14px; display: flex; flex-direction: column; flex-shrink: 0; }
+.logo-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; padding: 0 6px; }
+.logo-mark { width: 36px; height: 36px; background: linear-gradient(135deg,#4f6ef7,#818cf8); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.logo-mark svg { width: 20px; height: 20px; }
+.logo-name { color: white; font-weight: 700; font-size: 17px; }
+.logo-tag { color: rgba(255,255,255,0.3); font-size: 10px; display: block; }
+.nav-group { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.2); letter-spacing: 0.12em; text-transform: uppercase; padding: 0 8px; margin: 14px 0 5px; }
+.nb { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; border: none; cursor: pointer; width: 100%; background: transparent; color: rgba(255,255,255,0.4); font-size: 12px; font-weight: 500; text-align: left; font-family: inherit; margin-bottom: 2px; border-left: 2px solid transparent; }
+.nb svg { width: 15px; height: 15px; }
+.nb.active { background: rgba(79,110,247,0.2); color: white; border-left-color: #4f6ef7; }
+.nb:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.7); }
+.sidebar-foot { margin-top: auto; }
+.doc-chip { display: flex; align-items: center; gap: 8px; padding: 10px 8px; background: rgba(255,255,255,0.05); border-radius: 9px; }
+.doc-av { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#4f6ef7,#818cf8); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 11px; }
+.doc-name { color: white; font-weight: 600; font-size: 12px; }
+.doc-role { color: rgba(255,255,255,0.3); font-size: 10px; }
+.main { flex: 1; display: flex; flex-direction: column; }
+.topbar { background: white; border-bottom: 1px solid #e8edf8; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; }
+.topbar-title { font-size: 16px; font-weight: 700; color: #1a1f5e; }
+.topbar-right { display: flex; gap: 10px; align-items: center; }
+.period-selector { display: flex; background: #f0f4ff; border-radius: 8px; padding: 3px; gap: 2px; }
+.period-btn { padding: 5px 12px; border-radius: 6px; border: none; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; background: transparent; color: #64748b; }
+.period-btn.active { background: white; color: #1a1f5e; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.btn-export { padding: 7px 14px; border: 1.5px solid #e0e7ff; background: white; color: #4f6ef7; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px; font-family: inherit; }
+.content { padding: 24px 28px; flex: 1; }
+.section-title { font-size: 13px; font-weight: 700; color: #1a1f5e; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.section-title::after { content:''; flex:1; height:1px; background:#e8edf8; }
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+.sc { background: white; border-radius: 14px; padding: 20px; border: 1px solid #e8edf8; position: relative; overflow: hidden; }
+.sc::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.sc.bl::before { background: linear-gradient(90deg,#4f6ef7,#818cf8); }
+.sc.gr::before { background: linear-gradient(90deg,#10b981,#34d399); }
+.sc.am::before { background: linear-gradient(90deg,#f59e0b,#fcd34d); }
+.sc.re::before { background: linear-gradient(90deg,#ef4444,#f87171); }
+.sc.pu::before { background: linear-gradient(90deg,#7c3aed,#a78bfa); }
+.sc-icon { width: 36px; height: 36px; border-radius: 10px; display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+.sc-icon svg { width: 18px; height: 18px; }
+.sc-val { font-size: 28px; font-weight: 800; color: #1a1f5e; }
+.sc-label { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.sc-delta { font-size: 11px; font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+.up { color: #10b981; } .dn { color: #ef4444; } .wa { color: #f59e0b; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.g3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+.panel { background: white; border-radius: 14px; border: 1px solid #e8edf8; overflow: hidden; }
+.ph { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+.ph-title { font-size: 13px; font-weight: 700; color: #1a1f5e; }
+.ph-sub { font-size: 11px; color: #94a3b8; }
+.ph-link { font-size: 11px; color: #4f6ef7; cursor: pointer; font-weight: 500; }
+.chart { padding: 16px 20px; }
+.chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 100px; margin-bottom: 8px; }
+.bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.bar { width: 100%; border-radius: 5px 5px 0 0; cursor: pointer; transition: opacity 0.15s; }
+.bar:hover { opacity: 0.8; }
+.bar-val { font-size: 10px; font-weight: 700; color: #4f6ef7; }
+.bar-label { font-size: 10px; color: #94a3b8; }
+.prog-row { display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-bottom: 1px solid #f8faff; }
+.prog-row:last-child { border-bottom: none; }
+.prog-label { font-size: 12px; color: #475569; width: 100px; flex-shrink: 0; }
+.prog-bar-wrap { flex: 1; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+.prog-bar { height: 100%; border-radius: 4px; }
+.prog-val { font-size: 12px; font-weight: 700; color: #1a1f5e; width: 40px; text-align: right; }
+.table-wrap { overflow: auto; }
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { font-size: 10px; font-weight: 700; color: #94a3b8; letter-spacing: 0.06em; text-transform: uppercase; padding: 10px 20px; text-align: left; background: #f8faff; border-bottom: 1px solid #f1f5f9; }
+.tbl td { font-size: 12px; color: #475569; padding: 12px 20px; border-bottom: 1px solid #f8faff; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: #f8faff; }
+.tbl-name { font-weight: 600; color: #1e293b; }
+.badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.b-ok { background: #d1fae5; color: #065f46; }
+.b-wa { background: #fef3c7; color: #d97706; }
+.b-al { background: #fee2e2; color: #991b1b; }
+.donut-wrap { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 20px; }
+.donut { position: relative; width: 100px; height: 100px; }
+.donut svg { transform: rotate(-90deg); }
+.donut-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+.donut-val { font-size: 18px; font-weight: 800; color: #1a1f5e; }
+.donut-sub { font-size: 9px; color: #94a3b8; }
+.legend { display: flex; flex-direction: column; gap: 8px; }
+.legend-item { display: flex; align-items: center; gap: 8px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-label { font-size: 11px; color: #475569; }
+.legend-val { font-size: 11px; font-weight: 700; color: #1a1f5e; margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+    <div><div class="logo-name">Medaut</div><span class="logo-tag">Cirugía Digital</span></div>
+  </div>
+  <div class="nav-group">Principal</div>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Panel de control</button>
+  <button class="nb active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Métricas</button>
+  <div class="nav-group">Gestión</div>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendario</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Consultas virtuales</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Base de datos</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Mensajes</button>
+  <div class="nav-group">Admin</div>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Permisos</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Configuración</button>
+  <div class="sidebar-foot">
+    <div class="doc-chip">
+      <div class="doc-av">DR</div>
+      <div><div class="doc-name">Dr. Ramírez</div><div class="doc-role">Cirujano General</div></div>
+    </div>
+  </div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Métricas del consultorio</div>
+    <div class="topbar-right">
+      <div class="period-selector">
+        <button class="period-btn">7 días</button>
+        <button class="period-btn">30 días</button>
+        <button class="period-btn active">Este mes</button>
+        <button class="period-btn">Este año</button>
+      </div>
+      <button class="btn-export">Exportar PDF</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="section-title">Resumen del mes</div>
+    <div class="stats">
+      <div class="sc bl"><div class="sc-icon" style="background:#eff2ff"><svg viewBox="0 0 24 24" fill="none" stroke="#4f6ef7" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="sc-val">$18,400</div><div class="sc-label">Ingresos del mes</div><div class="sc-delta up">↑ 22% vs mes anterior</div></div>
+      <div class="sc gr"><div class="sc-icon" style="background:#ecfdf5"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="sc-val">34</div><div class="sc-label">Pacientes nuevos</div><div class="sc-delta up">↑ 12 más que junio</div></div>
+      <div class="sc am"><div class="sc-icon" style="background:#fffbeb"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="sc-val">6.2%</div><div class="sc-label">Tasa de ausentismo</div><div class="sc-delta up">↓ 3.1% mejor que junio</div></div>
+      <div class="sc pu"><div class="sc-icon" style="background:#f5f3ff"><svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><div class="sc-val">89%</div><div class="sc-label">Tasa de retención</div><div class="sc-delta up">↑ 4% vs mes anterior</div></div>
+    </div>
+    <div class="g3">
+      <div class="panel">
+        <div class="ph"><span class="ph-title">Cirugías e intervenciones por mes</span><span class="ph-sub">Últimos 7 meses</span></div>
+        <div class="chart">
+          <div class="chart-bars">
+            <div class="bar-wrap"><div class="bar-val">18</div><div class="bar" style="height:46px;background:#e0e7ff"></div><div class="bar-label">Ene</div></div>
+            <div class="bar-wrap"><div class="bar-val">22</div><div class="bar" style="height:56px;background:#e0e7ff"></div><div class="bar-label">Feb</div></div>
+            <div class="bar-wrap"><div class="bar-val">19</div><div class="bar" style="height:48px;background:#e0e7ff"></div><div class="bar-label">Mar</div></div>
+            <div class="bar-wrap"><div class="bar-val">27</div><div class="bar" style="height:68px;background:#e0e7ff"></div><div class="bar-label">Abr</div></div>
+            <div class="bar-wrap"><div class="bar-val">25</div><div class="bar" style="height:63px;background:#e0e7ff"></div><div class="bar-label">May</div></div>
+            <div class="bar-wrap"><div class="bar-val">29</div><div class="bar" style="height:73px;background:#c7d2fe"></div><div class="bar-label">Jun</div></div>
+            <div class="bar-wrap"><div class="bar-val" style="color:#4f6ef7;font-weight:800;">38</div><div class="bar" style="height:96px;background:linear-gradient(180deg,#4f6ef7,#818cf8)"></div><div class="bar-label" style="color:#4f6ef7;font-weight:700;">Jul</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><span class="ph-title">Tipo de procedimiento</span></div>
+        <div class="donut-wrap">
+          <div class="donut">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#f1f5f9" stroke-width="14"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#4f6ef7" stroke-width="14" stroke-dasharray="95 144" stroke-dashoffset="0"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#10b981" stroke-width="14" stroke-dasharray="57 182" stroke-dashoffset="-95"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#f59e0b" stroke-width="14" stroke-dasharray="29 210" stroke-dashoffset="-152"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#7c3aed" stroke-width="14" stroke-dasharray="19 220" stroke-dashoffset="-181"/>
+            </svg>
+            <div class="donut-label"><div class="donut-val">38</div><div class="donut-sub">total</div></div>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#4f6ef7"></div><div class="legend-label">Cirugía mayor</div><div class="legend-val">40%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div><div class="legend-label">Cirugía menor</div><div class="legend-val">24%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><div class="legend-label">Consulta pre-op</div><div class="legend-val">20%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div><div class="legend-label">Post-operatorio</div><div class="legend-val">16%</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="panel">
+        <div class="ph"><span class="ph-title">Origen de pacientes nuevos</span><span class="ph-sub">34 nuevos este mes</span></div>
+        <div style="padding:8px 0;">
+          <div class="prog-row"><span class="prog-label">Instagram</span><div class="prog-bar-wrap"><div class="prog-bar" style="width:42%;background:linear-gradient(90deg,#e1306c,#f472b6)"></div></div><span class="prog-val">42%</span></div>
+          <div class="prog-row"><span class="prog-label">Referido</span><div class="prog-bar-wrap"><div class="prog-bar" style="width:28%;background:linear-gradient(90deg,#4f6ef7,#818cf8)"></div></div><span class="prog-val">28%</span></div>
+          <div class="prog-row"><span class="prog-label">WhatsApp</span><div class="prog-bar-wrap"><div class="prog-bar" style="width:16%;background:linear-gradient(90deg,#25d366,#34d399)"></div></div><span class="prog-val">16%</span></div>
+          <div class="prog-row"><span class="prog-label">Google</span><div class="prog-bar-wrap"><div class="prog-bar" style="width:10%;background:linear-gradient(90deg,#f59e0b,#fcd34d)"></div></div><span class="prog-val">10%</span></div>
+          <div class="prog-row"><span class="prog-label">Facebook</span><div class="prog-bar-wrap"><div class="prog-bar" style="width:4%;background:linear-gradient(90deg,#1877f2,#60a5fa)"></div></div><span class="prog-val">4%</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><span class="ph-title">Métricas por cirujano</span></div>
+        <table class="tbl">
+          <thead><tr><th>Cirujano</th><th>Procedimientos</th><th>Ingresos</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tbl-name">Dr. Ramírez</span></td><td>22</td><td>$11,200</td></tr>
+            <tr><td><span class="tbl-name">Dra. García</span></td><td>16</td><td>$7,200</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="ph-title">Pacientes con mayor actividad este mes</span><span class="ph-link">Ver todos →</span></div>
+      <table class="tbl">
+        <thead><tr><th>Paciente</th><th>Procedimiento</th><th>Consultas</th><th>Último ingreso</th><th>Próxima cita</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tbl-name">María Rodríguez</span></td><td>Apendicectomía</td><td>4</td><td>$2,400</td><td>10 ago</td><td><span class="badge b-ok">Al día</span></td></tr>
+          <tr><td><span class="tbl-name">Carlos González</span></td><td>Colecistectomía</td><td>3</td><td>$1,800</td><td>15 ago</td><td><span class="badge b-ok">Al día</span></td></tr>
+          <tr><td><span class="tbl-name">Ana López</span></td><td>Hernioplastía</td><td>2</td><td>$1,200</td><td>Sin turno</td><td><span class="badge b-wa">Seguimiento</span></td></tr>
+          <tr><td><span class="tbl-name">Juan Pérez</span></td><td>Post-operatorio</td><td>5</td><td>$3,000</td><td>5 ago</td><td><span class="badge b-ok">Al día</span></td></tr>
+          <tr><td><span class="tbl-name">Sofía Martínez</span></td><td>Consulta pre-op</td><td>1</td><td>$600</td><td>Sin turno</td><td><span class="badge b-al">Contactar</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+document.querySelectorAll('.period-btn').forEach(b => b.addEventListener('click', function() {
+  document.querySelectorAll('.period-btn').forEach(x => x.classList.remove('active'));
+  this.classList.add('active');
+}));
+</script>
+</body>
+</html>
