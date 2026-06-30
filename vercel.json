@@ -1,0 +1,11 @@
+{
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "routes": [
+    { "src": "/", "dest": "/medaut-landing.html" },
+    { "src": "/metricas", "dest": "/medaut-metricas.html" },
+    { "src": "/pacientes", "dest": "/medaut-basededatos.html" },
+    { "src": "/virtual", "dest": "/medaut-virtual.html" },
+    { "src": "/permisos", "dest": "/medaut-permisos.html" }
+  ]
+}
