@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medaut — Consultas Virtuales</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: #f0f4ff; color: #1a1f5e; min-height: 100vh; }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: #1a1f5e; padding: 24px 14px; display: flex; flex-direction: column; flex-shrink: 0; }
+.logo-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; padding: 0 6px; }
+.logo-mark { width: 36px; height: 36px; background: linear-gradient(135deg,#4f6ef7,#818cf8); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.logo-mark svg { width: 20px; height: 20px; }
+.logo-name { color: white; font-weight: 700; font-size: 17px; }
+.logo-tag { color: rgba(255,255,255,0.3); font-size: 10px; display: block; }
+.nav-group { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.2); letter-spacing: 0.12em; text-transform: uppercase; padding: 0 8px; margin: 14px 0 5px; }
+.nb { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; border: none; cursor: pointer; width: 100%; background: transparent; color: rgba(255,255,255,0.4); font-size: 12px; font-weight: 500; text-align: left; font-family: inherit; margin-bottom: 2px; border-left: 2px solid transparent; }
+.nb svg { width: 15px; height: 15px; }
+.nb.active { background: rgba(79,110,247,0.2); color: white; border-left-color: #4f6ef7; }
+.nb:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.7); }
+.sidebar-foot { margin-top: auto; }
+.doc-chip { display: flex; align-items: center; gap: 8px; padding: 10px 8px; background: rgba(255,255,255,0.05); border-radius: 9px; }
+.doc-av { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#4f6ef7,#818cf8); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 11px; }
+.doc-name { color: white; font-weight: 600; font-size: 12px; }
+.doc-role { color: rgba(255,255,255,0.3); font-size: 10px; }
+.main { flex: 1; display: flex; flex-direction: column; }
+.topbar { background: white; border-bottom: 1px solid #e8edf8; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; }
+.topbar-title { font-size: 16px; font-weight: 700; color: #1a1f5e; }
+.topbar-right { display: flex; gap: 8px; }
+.btn-outline { padding: 7px 14px; border: 1.5px solid #e0e7ff; background: white; color: #4f6ef7; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px; font-family: inherit; }
+.btn-primary { padding: 7px 16px; border: none; background: linear-gradient(135deg,#4f6ef7,#818cf8); color: white; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px; font-family: inherit; display: flex; align-items: center; gap: 6px; }
+.content { padding: 24px 28px; flex: 1; overflow-y: auto; }
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+.sc { background: white; border-radius: 14px; padding: 18px; border: 1px solid #e8edf8; position: relative; overflow: hidden; }
+.sc::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.sc.bl::before { background: linear-gradient(90deg,#4f6ef7,#818cf8); }
+.sc.gr::before { background: linear-gradient(90deg,#10b981,#34d399); }
+.sc.am::before { background: linear-gradient(90deg,#f59e0b,#fcd34d); }
+.sc.pu::before { background: linear-gradient(90deg,#7c3aed,#a78bfa); }
+.sc-icon { width: 34px; height: 34px; border-radius: 9px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+.sc-icon svg { width: 16px; height: 16px; }
+.sc-val { font-size: 26px; font-weight: 800; color: #1a1f5e; }
+.sc-label { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.sc-delta { font-size: 10px; font-weight: 600; margin-top: 6px; }
+.up { color: #10b981; }
+.now-banner { background: linear-gradient(135deg,#1a1f5e,#2d3494); border-radius: 14px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.now-left { display: flex; align-items: center; gap: 14px; }
+.now-pulse { width: 12px; height: 12px; border-radius: 50%; background: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.3); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 4px rgba(16,185,129,0.3)}50%{box-shadow:0 0 0 8px rgba(16,185,129,0.1)} }
+.now-text { color: white; font-weight: 700; font-size: 14px; }
+.now-sub { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 2px; }
+.now-right { display: flex; align-items: center; gap: 10px; }
+.now-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#f59e0b,#d97706); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; border: 2px solid rgba(255,255,255,0.2); }
+.now-patient { color: white; font-weight: 600; font-size: 13px; }
+.now-patient-sub { color: rgba(255,255,255,0.5); font-size: 11px; }
+.join-btn { padding: 10px 20px; background: #10b981; border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.g2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; margin-bottom: 20px; }
+.panel { background: white; border-radius: 14px; border: 1px solid #e8edf8; overflow: hidden; }
+.ph { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+.ph-title { font-size: 13px; font-weight: 700; color: #1a1f5e; }
+.virt-item { padding: 14px 20px; border-bottom: 1px solid #f8faff; display: flex; align-items: center; gap: 12px; }
+.virt-item:last-child { border-bottom: none; }
+.vi-time { width: 52px; text-align: center; background: #f0f4ff; border-radius: 8px; padding: 7px 4px; flex-shrink: 0; }
+.vi-hour { font-size: 12px; font-weight: 700; color: #4f6ef7; }
+.vi-ampm { font-size: 9px; color: #94a3b8; }
+.vi-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+.vi-info { flex: 1; }
+.vi-name { font-size: 13px; font-weight: 600; color: #1e293b; }
+.vi-sub { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+.vi-actions { display: flex; gap: 6px; }
+.vi-btn { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.vi-btn-outline { border: 1px solid #e0e7ff; background: white; color: #4f6ef7; }
+.vi-btn-green { border: none; background: #10b981; color: white; }
+.vi-btn-disabled { border: 1px solid #e8edf8; background: #f8faff; color: #94a3b8; cursor: not-allowed; }
+.vi-status { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.vs-now { background: #d1fae5; color: #065f46; }
+.vs-soon { background: #fef3c7; color: #d97706; }
+.vs-later { background: #f1f5f9; color: #64748b; }
+.vs-done { background: #e0e7ff; color: #3730a3; }
+.platform-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
+.plat-card { border: 2px solid #e8edf8; border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.15s; text-align: center; }
+.plat-card.selected { border-color: #4f6ef7; background: #eff2ff; }
+.plat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; }
+.plat-icon svg { width: 22px; height: 22px; }
+.plat-name { font-size: 12px; font-weight: 700; color: #1e293b; }
+.plat-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+.send-form { padding: 16px 20px; }
+.form-row { margin-bottom: 10px; }
+.form-label { font-size: 10px; font-weight: 700; color: #94a3b8; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 5px; display: block; }
+.form-input { width: 100%; padding: 9px 12px; border: 1.5px solid #e0e7ff; border-radius: 8px; font-size: 12px; color: #1e293b; font-family: inherit; }
+.form-select { width: 100%; padding: 9px 12px; border: 1.5px solid #e0e7ff; border-radius: 8px; font-size: 12px; color: #1e293b; font-family: inherit; background: white; }
+.channels { display: flex; gap: 8px; margin-top: 4px; }
+.ch-btn { flex: 1; padding: 8px; border: 1.5px solid #e0e7ff; border-radius: 7px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; background: white; color: #475569; }
+.ch-btn.active { border-color: #4f6ef7; background: #eff2ff; color: #4f6ef7; }
+.send-btn { width: 100%; padding: 10px; background: linear-gradient(135deg,#4f6ef7,#818cf8); border: none; border-radius: 8px; color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 12px; }
+.upcoming-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid #f8faff; }
+.upcoming-item:last-child { border-bottom: none; }
+.up-date { width: 44px; text-align: center; flex-shrink: 0; }
+.up-day { font-size: 18px; font-weight: 800; color: #1a1f5e; line-height: 1; }
+.up-month { font-size: 9px; color: #94a3b8; text-transform: uppercase; }
+.up-av { width: 30px; height: 30px; border-radius: 50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:10px; flex-shrink:0; }
+.up-name { font-size: 12px; font-weight: 600; color: #1e293b; }
+.up-sub { font-size: 10px; color: #94a3b8; }
+.up-time { font-size: 11px; font-weight: 600; color: #4f6ef7; margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+    <div><div class="logo-name">Medaut</div><span class="logo-tag">Cirugía Digital</span></div>
+  </div>
+  <div class="nav-group">Principal</div>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Panel de control</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Métricas</button>
+  <div class="nav-group">Gestión</div>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendario</button>
+  <button class="nb active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Consultas virtuales</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Base de datos</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Mensajes</button>
+  <div class="nav-group">Admin</div>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Permisos</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Configuración</button>
+  <div class="sidebar-foot">
+    <div class="doc-chip">
+      <div class="doc-av">DR</div>
+      <div><div class="doc-name">Dr. Ramírez</div><div class="doc-role">Cirujano General</div></div>
+    </div>
+  </div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Consultas virtuales</div>
+    <div class="topbar-right">
+      <button class="btn-outline">Ver historial</button>
+      <button class="btn-primary">+ Nueva consulta virtual</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats">
+      <div class="sc bl"><div class="sc-icon" style="background:#eff2ff"><svg viewBox="0 0 24 24" fill="none" stroke="#4f6ef7" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div><div class="sc-val">3</div><div class="sc-label">Consultas virtuales hoy</div><div class="sc-delta up">↑ 1 más que ayer</div></div>
+      <div class="sc gr"><div class="sc-icon" style="background:#ecfdf5"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="sc-val">18</div><div class="sc-label">Este mes</div><div class="sc-delta up">↑ 6 vs junio</div></div>
+      <div class="sc am"><div class="sc-icon" style="background:#fffbeb"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="sc-val">31%</div><div class="sc-label">Del total de consultas</div><div class="sc-delta up">↑ 8% vs junio</div></div>
+      <div class="sc pu"><div class="sc-icon" style="background:#f5f3ff"><svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="sc-val">96%</div><div class="sc-label">Tasa de asistencia virtual</div><div class="sc-delta up">↑ 4% vs junio</div></div>
+    </div>
+    <div class="now-banner">
+      <div class="now-left">
+        <div class="now-pulse"></div>
+        <div><div class="now-text">Consulta en curso ahora</div><div class="now-sub">Comenzó hace 5 minutos · Google Meet</div></div>
+      </div>
+      <div class="now-right">
+        <div class="now-avatar">JP</div>
+        <div><div class="now-patient">Juan Pérez</div><div class="now-patient-sub">Post-operatorio · Dr. Ramírez</div></div>
+        <button class="join-btn">Unirse ahora</button>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="panel">
+        <div class="ph"><span class="ph-title">Agenda virtual de hoy — 25 Jul</span><button class="btn-primary" style="font-size:11px;padding:5px 12px;">+ Nueva</button></div>
+        <div class="virt-item">
+          <div class="vi-time"><div class="vi-hour">9:00</div><div class="vi-ampm">AM</div></div>
+          <div class="vi-avatar" style="background:linear-gradient(135deg,#4f6ef7,#818cf8)">MR</div>
+          <div class="vi-info"><div class="vi-name">María Rodríguez</div><div class="vi-sub">Consulta pre-operatoria · Google Meet</div></div>
+          <span class="vi-status vs-done">Finalizada</span>
+          <div class="vi-actions"><button class="vi-btn vi-btn-outline">Ver notas</button></div>
+        </div>
+        <div class="virt-item" style="background:#f0fdf4;">
+          <div class="vi-time"><div class="vi-hour">11:00</div><div class="vi-ampm">AM</div></div>
+          <div class="vi-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">JP</div>
+          <div class="vi-info"><div class="vi-name">Juan Pérez</div><div class="vi-sub">Post-operatorio · Google Meet</div></div>
+          <span class="vi-status vs-now">En curso</span>
+          <div class="vi-actions"><button class="vi-btn vi-btn-green">Unirse</button></div>
+        </div>
+        <div class="virt-item">
+          <div class="vi-time"><div class="vi-hour">3:00</div><div class="vi-ampm">PM</div></div>
+          <div class="vi-avatar" style="background:linear-gradient(135deg,#10b981,#059669)">AL</div>
+          <div class="vi-info"><div class="vi-name">Ana López</div><div class="vi-sub">Seguimiento cirugía · Google Meet</div></div>
+          <span class="vi-status vs-soon">En 4 horas</span>
+          <div class="vi-actions"><button class="vi-btn vi-btn-outline">Ver link</button></div>
+        </div>
+        <div class="virt-item">
+          <div class="vi-time"><div class="vi-hour">5:00</div><div class="vi-ampm">PM</div></div>
+          <div class="vi-avatar" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">CG</div>
+          <div class="vi-info"><div class="vi-name">Carlos González</div><div class="vi-sub">Control mensual · Zoom</div></div>
+          <span class="vi-status vs-later">En 6 horas</span>
+          <div class="vi-actions"><button class="vi-btn vi-btn-disabled">No disponible</button></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="panel">
+          <div class="ph"><span class="ph-title">Plataforma preferida</span></div>
+          <div class="platform-cards">
+            <div class="plat-card selected" onclick="selectPlat(this)">
+              <div class="plat-icon" style="background:#e8f0fe"><svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="#4285f4"/><circle cx="24" cy="24" r="10" fill="white"/></svg></div>
+              <div class="plat-name">Google Meet</div>
+              <div class="plat-sub">Recomendado</div>
+            </div>
+            <div class="plat-card" onclick="selectPlat(this)">
+              <div class="plat-icon" style="background:#e8f4fd"><svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="#2D8CFF"/><path d="M28 24l8-6v12l-8-6z" fill="white"/><rect x="8" y="14" width="22" height="20" rx="3" fill="white"/></svg></div>
+              <div class="plat-name">Zoom</div>
+              <div class="plat-sub">Alternativa</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><span class="ph-title">Enviar link de consulta</span></div>
+          <div class="send-form">
+            <div class="form-row">
+              <label class="form-label">Paciente</label>
+              <select class="form-select"><option>María Rodríguez</option><option>Juan Pérez</option><option>Ana López</option></select>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Fecha y hora</label>
+              <input type="datetime-local" class="form-input" value="2026-07-25T15:00">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Enviar por</label>
+              <div class="channels">
+                <button class="ch-btn active">WhatsApp</button>
+                <button class="ch-btn">Email</button>
+              </div>
+            </div>
+            <button class="send-btn">Generar y enviar link automáticamente</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><span class="ph-title">Próximas consultas virtuales</span><span style="font-size:11px;color:#94a3b8;">Esta semana</span></div>
+      <div class="upcoming-item"><div class="up-date"><div class="up-day">26</div><div class="up-month">Jul</div></div><div class="up-av" style="background:linear-gradient(135deg,#ec4899,#be185d)">SM</div><div><div class="up-name">Sofía Martínez</div><div class="up-sub">Consulta pre-operatoria · Google Meet</div></div><div class="up-time">10:00 AM</div></div>
+      <div class="upcoming-item"><div class="up-date"><div class="up-day">27</div><div class="up-month">Jul</div></div><div class="up-av" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8)">RS</div><div><div class="up-name">Roberto Silva</div><div class="up-sub">Seguimiento post-op · Zoom</div></div><div class="up-time">2:30 PM</div></div>
+      <div class="upcoming-item"><div class="up-date"><div class="up-day">28</div><div class="up-month">Jul</div></div><div class="up-av" style="background:linear-gradient(135deg,#14b8a6,#0d9488)">LG</div><div><div class="up-name">Laura Gómez</div><div class="up-sub">Control mensual · Google Meet</div></div><div class="up-time">9:00 AM</div></div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+function selectPlat(el) {
+  document.querySelectorAll('.plat-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+document.querySelectorAll('.ch-btn').forEach(b => b.addEventListener('click', function() {
+  document.querySelectorAll('.ch-btn').forEach(x => x.classList.remove('active'));
+  this.classList.add('active');
+}));
+</script>
+</body>
+</html>
