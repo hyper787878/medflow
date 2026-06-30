@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medaut — Control de Permisos</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: #f0f4ff; color: #1a1f5e; min-height: 100vh; }
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: #1a1f5e; padding: 24px 14px; display: flex; flex-direction: column; flex-shrink: 0; }
+.logo-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; padding: 0 6px; }
+.logo-mark { width: 36px; height: 36px; background: linear-gradient(135deg,#4f6ef7,#818cf8); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.logo-mark svg { width: 20px; height: 20px; }
+.logo-name { color: white; font-weight: 700; font-size: 17px; }
+.logo-tag { color: rgba(255,255,255,0.3); font-size: 10px; display: block; }
+.nav-group { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.2); letter-spacing: 0.12em; text-transform: uppercase; padding: 0 8px; margin: 14px 0 5px; }
+.nb { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; border: none; cursor: pointer; width: 100%; background: transparent; color: rgba(255,255,255,0.4); font-size: 12px; font-weight: 500; text-align: left; font-family: inherit; margin-bottom: 2px; border-left: 2px solid transparent; }
+.nb svg { width: 15px; height: 15px; }
+.nb.active { background: rgba(79,110,247,0.2); color: white; border-left-color: #4f6ef7; }
+.nb:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.7); }
+.sidebar-foot { margin-top: auto; }
+.doc-chip { display: flex; align-items: center; gap: 8px; padding: 10px 8px; background: rgba(255,255,255,0.05); border-radius: 9px; }
+.doc-av { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#4f6ef7,#818cf8); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 11px; }
+.doc-name { color: white; font-weight: 600; font-size: 12px; }
+.doc-role { color: rgba(255,255,255,0.3); font-size: 10px; }
+.main { flex: 1; display: flex; flex-direction: column; }
+.topbar { background: white; border-bottom: 1px solid #e8edf8; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; }
+.topbar-title { font-size: 16px; font-weight: 700; color: #1a1f5e; }
+.topbar-right { display: flex; gap: 8px; }
+.btn-outline { padding: 7px 14px; border: 1.5px solid #e0e7ff; background: white; color: #4f6ef7; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px; font-family: inherit; }
+.btn-primary { padding: 7px 16px; border: none; background: linear-gradient(135deg,#4f6ef7,#818cf8); color: white; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 8px; font-family: inherit; display: flex; align-items: center; gap: 6px; }
+.content { padding: 24px 28px; flex: 1; overflow-y: auto; }
+.info-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.info-banner svg { width: 18px; height: 18px; color: #1d4ed8; flex-shrink: 0; }
+.info-banner p { font-size: 13px; color: #1e40af; line-height: 1.5; }
+.team-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+.member-card { background: white; border: 2px solid #e8edf8; border-radius: 14px; padding: 18px; cursor: pointer; transition: all 0.15s; }
+.member-card:hover { border-color: #c7d2fe; }
+.member-card.active { border-color: #4f6ef7; box-shadow: 0 0 0 3px rgba(79,110,247,0.1); }
+.mc-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; margin: 0 auto 12px; }
+.mc-name { font-size: 13px; font-weight: 700; color: #1e293b; text-align: center; }
+.mc-role { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 2px; }
+.mc-badge { display: block; text-align: center; margin-top: 8px; }
+.role-badge { font-size: 10px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+.rb-admin { background: #fee2e2; color: #991b1b; }
+.rb-doctor { background: #dbeafe; color: #1d4ed8; }
+.rb-recep { background: #d1fae5; color: #065f46; }
+.rb-asist { background: #fef3c7; color: #d97706; }
+.perm-panel { background: white; border-radius: 14px; border: 1px solid #e8edf8; overflow: hidden; margin-bottom: 20px; }
+.ph { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+.ph-title { font-size: 13px; font-weight: 700; color: #1a1f5e; }
+.ph-member { display: flex; align-items: center; gap: 8px; }
+.ph-av { width: 28px; height: 28px; border-radius: 50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:10px; }
+.ph-name { font-size: 12px; font-weight: 600; color: #1e293b; }
+.perm-section { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; }
+.perm-section:last-child { border-bottom: none; }
+.perm-section-title { font-size: 10px; font-weight: 700; color: #94a3b8; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.perm-section-title svg { width: 13px; height: 13px; }
+.perm-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f8faff; }
+.perm-row:last-child { border-bottom: none; }
+.perm-left { flex: 1; }
+.perm-name { font-size: 13px; font-weight: 500; color: #1e293b; }
+.perm-desc { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.perm-right { display: flex; align-items: center; gap: 10px; }
+.toggle { width: 36px; height: 20px; border-radius: 10px; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; border: none; }
+.toggle.on { background: #4f6ef7; }
+.toggle.off { background: #e2e8f0; }
+.toggle::after { content:''; position:absolute; top:3px; width:14px; height:14px; border-radius:50%; background:white; transition:left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.toggle.on::after { left:19px; }
+.toggle.off::after { left:3px; }
+.level-select { padding: 5px 8px; border: 1px solid #e0e7ff; border-radius: 6px; font-size: 11px; color: #475569; font-family: inherit; cursor: pointer; background: white; }
+.log-panel { background: white; border-radius: 14px; border: 1px solid #e8edf8; overflow: hidden; }
+.log-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #f8faff; }
+.log-item:last-child { border-bottom: none; }
+.log-av { width: 28px; height: 28px; border-radius: 50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:10px; flex-shrink:0; margin-top:2px; }
+.log-text { flex: 1; font-size: 12px; color: #475569; line-height: 1.5; }
+.log-text strong { color: #1e293b; font-weight: 600; }
+.log-text .action { color: #4f6ef7; font-weight: 600; }
+.log-time { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+    <div><div class="logo-name">Medaut</div><span class="logo-tag">Cirugía Digital</span></div>
+  </div>
+  <div class="nav-group">Principal</div>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Panel de control</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Métricas</button>
+  <div class="nav-group">Gestión</div>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendario</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Consultas virtuales</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Base de datos</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Mensajes</button>
+  <div class="nav-group">Admin</div>
+  <button class="nb active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Permisos</button>
+  <button class="nb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Configuración</button>
+  <div class="sidebar-foot">
+    <div class="doc-chip">
+      <div class="doc-av">DR</div>
+      <div><div class="doc-name">Dr. Ramírez</div><div class="doc-role">Administrador</div></div>
+    </div>
+  </div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Control de permisos y accesos</div>
+    <div class="topbar-right">
+      <button class="btn-outline">Exportar registro</button>
+      <button class="btn-primary">+ Invitar miembro</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="info-banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p>Solo vos como <strong>administrador</strong> podés modificar los permisos. Los cambios se aplican de forma inmediata y quedan registrados en el historial.</p>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:#1a1f5e;margin-bottom:14px;">Equipo del consultorio</div>
+    <div class="team-grid">
+      <div class="member-card active" onclick="selectMember(this,'DR','linear-gradient(135deg,#4f6ef7,#818cf8)','Dr. Ramírez','Administrador')">
+        <div class="mc-avatar" style="background:linear-gradient(135deg,#4f6ef7,#818cf8)">DR</div>
+        <div class="mc-name">Dr. Ramírez</div><div class="mc-role">Cirujano General</div>
+        <div class="mc-badge"><span class="role-badge rb-admin">Administrador</span></div>
+      </div>
+      <div class="member-card" onclick="selectMember(this,'DG','linear-gradient(135deg,#7c3aed,#a78bfa)','Dra. García','Médico')">
+        <div class="mc-avatar" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">DG</div>
+        <div class="mc-name">Dra. García</div><div class="mc-role">Cirujana · Coloproctología</div>
+        <div class="mc-badge"><span class="role-badge rb-doctor">Médico</span></div>
+      </div>
+      <div class="member-card" onclick="selectMember(this,'LR','linear-gradient(135deg,#10b981,#059669)','Lic. Rodríguez','Recepción')">
+        <div class="mc-avatar" style="background:linear-gradient(135deg,#10b981,#059669)">LR</div>
+        <div class="mc-name">Lic. Rodríguez</div><div class="mc-role">Recepcionista</div>
+        <div class="mc-badge"><span class="role-badge rb-recep">Recepción</span></div>
+      </div>
+      <div class="member-card" onclick="selectMember(this,'MA','linear-gradient(135deg,#f59e0b,#d97706)','Martina Álvarez','Asistente')">
+        <div class="mc-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">MA</div>
+        <div class="mc-name">Martina Álvarez</div><div class="mc-role">Asistente quirúrgica</div>
+        <div class="mc-badge"><span class="role-badge rb-asist">Asistente</span></div>
+      </div>
+    </div>
+    <div class="perm-panel">
+      <div class="ph">
+        <span class="ph-title">Permisos de acceso</span>
+        <div class="ph-member">
+          <div class="ph-av" id="selAv" style="background:linear-gradient(135deg,#4f6ef7,#818cf8)">DR</div>
+          <span class="ph-name" id="selName">Dr. Ramírez — Administrador</span>
+        </div>
+      </div>
+      <div class="perm-section">
+        <div class="perm-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Datos de pacientes</div>
+        <div class="perm-row"><div class="perm-left"><div class="perm-name">Nombre y apellido</div><div class="perm-desc">Identificación básica del paciente</div></div><div class="perm-right"><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div></div>
+        <div class="perm-row"><div class="perm-left"><div class="perm-name">Historia clínica completa</div><div class="perm-desc">Diagnósticos, medicación, alergias y evolución</div></div><div class="perm-right"><select class="level-select"><option>Solo lectura</option><option selected>Lectura y escritura</option><option>Sin acceso</option></select><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div></div>
+        <div class="perm-row"><div class="perm-left"><div class="perm-name">Información de contacto</div><div class="perm-desc">Teléfono, email y dirección</div></div><div class="perm-right"><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div></div>
+        <div class="perm-row"><div class="perm-left"><div class="perm-name">Análisis y estudios</div><div class="perm-desc">Archivos subidos por el paciente</div></div><div class="perm-right"><select class="level-select"><option selected>Solo lectura</option><option>Lectura y escritura</option><option>Sin acceso</option></select><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div></div>
+      </div>
+      <div class="perm-section">
+        <div class="perm-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agenda y turnos</div>
+        <div class="perm-row"><div class="perm-left"><div class="perm-name">Ver agenda propia</div><div class="perm-desc">Turnos asignados a este médico</div></div><div class="perm-right"><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div></div>
+        <div class="perm-row"><div class="perm-left"><div class="perm-name">Ver agenda de todo el equipo</div><div class="perm-desc">Turnos de todos los médicos del consultorio</div></div><div class="perm-right"><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div></div>
+        <div class="perm-row"><div class="perm-left"><div class="perm-name">Crear y modificar turnos</div><div class="perm-desc">Agregar, editar y cancelar turnos</div></div><div class="perm-right"><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div></div>
+        <div class="perm-row"><div class="perm-left"><div class="perm-name">Consultas virtuales</div><div class="perm-desc">Crear y unirse a videollamadas</div></div><div class="perm-right"><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div></div>
+      </div>
+      <div class="perm-section">
+        <div class="perm-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Información financiera</div>
+        <div class="perm-row"><div class="perm-left"><div class="perm-name">Ver ingresos del consultorio</div><div class="perm-desc">Dashboard financiero completo</div></div><div class="perm-right"><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div></div>
+        <div class="perm-row"><div class="perm-left"><div class="perm-name">Ver honorarios por médico</div><div class="perm-desc">Ingresos generados por cada profesional</div></div><div class="perm-right"><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div></div>
+        <div class="perm-row"><div class="perm-left"><div class="perm-name">Gestión de cobros y pagos</div><div class="perm-desc">Registrar y modificar pagos de consultas</div></div><div class="perm-right"><button class="toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div></div>
+      </div>
+    </div>
+    <div class="log-panel">
+      <div class="ph"><span class="ph-title">Historial de cambios de acceso</span><span style="font-size:11px;color:#94a3b8;">Últimas 24 horas</span></div>
+      <div class="log-item"><div class="log-av" style="background:linear-gradient(135deg,#4f6ef7,#818cf8)">DR</div><div class="log-text"><strong>Dr. Ramírez</strong> <span class="action">desactivó</span> el acceso a información financiera de <strong>Lic. Rodríguez</strong></div><div class="log-time">Hace 2 h</div></div>
+      <div class="log-item"><div class="log-av" style="background:linear-gradient(135deg,#4f6ef7,#818cf8)">DR</div><div class="log-text"><strong>Dr. Ramírez</strong> <span class="action">activó</span> el acceso a historia clínica de <strong>Dra. García</strong></div><div class="log-time">Hace 5 h</div></div>
+      <div class="log-item"><div class="log-av" style="background:linear-gradient(135deg,#4f6ef7,#818cf8)">DR</div><div class="log-text"><strong>Dr. Ramírez</strong> <span class="action">invitó</span> a <strong>Martina Álvarez</strong> como Asistente quirúrgica</div><div class="log-time">Ayer 10:30 AM</div></div>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+function selectMember(card, initials, bg, name, role) {
+  document.querySelectorAll('.member-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  document.getElementById('selAv').textContent = initials;
+  document.getElementById('selAv').style.background = bg;
+  document.getElementById('selName').textContent = name + ' — ' + role;
+}
+</script>
+</body>
+</html>
